@@ -1,14 +1,20 @@
 
-GIT HUB : https://github.com/gsskalyan/CC-pa2
+GIT HUB [SOURCE] : https://github.com/gsskalyan/CC-pa2
+
+DOCKER HUB [IMAGES] : https://hub.docker.com/r/ss4477/pa2/tags
 
 IMPORTANT : Command to PULL / RUN Docker Hub Image:
-DOCKER HUB : https://hub.docker.com/r/ss4477/pa2/tags
 
-	docker run -v "$(pwd)":/data ss4477/pa2:v1
+RUN PREDICTION APP WITH DOCKER DESKTOP LOCAL
+	-	docker run -v "$(pwd)":/data ss4477/pa2:v1
 
-Hint:
-	1.	No need to modify anything in above command
-	2.	Keep TestDataset.csv in your present working directory from where you are running above docker command
+RUN PREDICTION APP WITH DOCKER in EC2
+	-	sudo docker run -v "$(pwd)":/data ss4477/pa2:v1
+
+MUST READ (before running above docker run command):
+	1.	Make sure to keep the input file named "TestDataset.csv" in your present working directory from where you are running above docker command
+	2.	No need to modify anything in above command.Your current working directory will be mounted to docker container with name /data
+	
 
 
 JAVA FILES
@@ -21,7 +27,7 @@ JAVA FILES
 		⁃	Reads ‘TestDataset.csv’ from present working directory
 		⁃	Outputs F1 score
 	3.	SparkML.java
-		⁃	Additionally, tried training the Model with other ML algorithms like Random Forest,Decision Tree (commented out)
+		⁃	Additionally, tried training the Model with other ML algorithms like Random Forest,Decision Tree (commented out before checking in to Git hub though)
 
 
 Docker Commands [Local]:
@@ -40,20 +46,26 @@ Docker Commands [Install in AMI]:
 	4.	docker —version
 
 
-CREATE SPARK CLUSTER:
+CREATE SPARK CLUSTER AND TRAIN ML MODEL:
 
 Spark cluster [Create EMR Spark cluster ,Train ML model using multiple EC2]
-	1.	Cluster Name : Test Spark [Followed:https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-spark-launch.html].Refer detailed screen prints attached in a separate document
-	2.	Connect to master(cluster): 
-		⁃	ssh -i ~/shiva-key.pem hadoop@ec2-54-147-160-139.compute-1.amazonaws.com
+	1.	Cluster Name : Test Spark [Followed:https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-spark-launch.html].Refer detailed screen prints attached in a separate document - CS643_PA2_CreateCLusterAndML_ParallelTraining_Proof.pdf
+	2.	Connect to one master(cluster): 
+		⁃	ssh -i ~/shiva-key.pem hadoop@ec2-34-204-196-140.compute-1.amazonaws.com
+		Connect to three slaves(cluster): 
+		-	ssh -i "shiva-key.pem" hadoop@ec2-35-171-164-174.compute-1.amazonaws.com
+		-	ssh -i "shiva-key.pem" hadoop@ec2-3-237-34-52.compute-1.amazonaws.com
+		-	ssh -i "shiva-key.pem" hadoop@ec2-3-236-123-47.compute-1.amazonaws.com
 	3.	Download the Jar (ML Training - Parallely in multiple EC2 instances) from my S3 Bucket (not a requirement)- 
 		⁃	aws s3 cp s3://shivapa2/ShivaPA2-1.0.0.jar .
-		⁃	aws s3 cp s3://shivapa2/TrainingDataset.csv .
+		⁃	aws s3 cp s3://shivapa2/TrainingDataset.csv .	[in both master and slave]
 		⁃	scp -i "shiva-key.pem" /Users/lopathara/eclipse-workspace/CC-PA2-Spark/target/ShivaPA2-1.0.0.jar  hadoop@ec2-54-147-160-139.compute-1.amazonaws.com:/home/hadoop/ShivaPA2-1.0.0.jar
-	5.	spark-submit —class com.amazonaws.pa2.spark.MLTrainSparkMlib ShivaPA2-1.0.0.jar
+	5.	spark-submit --class com.amazonaws.pa2.spark.MLTrainSparkMlib ShivaPA2-1.0.0.jar file:///data/TrainingDataset.csv 
 	6.	Download the saved Model
 		⁃	scp -i ~/shiva-key.pem -r hadoop@ec2-54-147-160-139.compute-1.amazonaws.com:TrainingDataset.csv .
 		⁃	scp -i ~/shiva-key.pem -r hadoop@ec2-54-147-160-139.compute-1.amazonaws.com:target/tmp/javaLogisticRegressionWithLBFGSModel .
+
+RUN WINE PREDICTION MODEL ON EC2:
 
 Creating an EC2 instance [For running Saved ML and run docker.]
 
@@ -86,7 +98,38 @@ Connect to an EC2 instance
 	⁃	ssh -i "shiva-key.pem" ec2-user@ec2-18-209-158-193.compute-1.amazonaws.com
 	⁃ Note - Public DNS (IPv4) : ec2-user@ec2-52-91-119-71 will change for new instance or every time you start/stop)
 
-Then follow Docker installation steps to run ‘Prediction’ application via Docker from EC2 instance
+RUN PREDICTION APP WITHOUT DOCKER in EC2 [Instance ID: i-07afb4e2c45374411] - Refer detailed screen prints attached in a separate document - CS643_PA2_WinePredict_WithAndWithoutDockerEC2.pdf
+	⁃	scp -i "shiva-key.pem" ~/.aws/credentials ec2-user@ec2-100-25-134-232.compute-1.amazonaws.com
+	-	scp -i "shiva-key.pem" -r /Users/lopathara/Downloads/jre-8u251-linux-x64.tar ec2-user@ec2-100-25-134-232.compute-1.amazonaws.com:/home/ec2-user/jre-8u251-linux-x64.tar	
+	-	ssh -i "shiva-key.pem" ec2-user@ec2-100-25-134-232.compute-1.amazonaws.com
+	-	To Download Artifacts
+	-	aws s3 cp s3://shivapa2/ShivaPA2-1.0.0.jar .
+	⁃	aws s3 cp s3://shivapa2/TestDataset.csv .
+	⁃	aws s3 cp s3://shivapa2/target . --recursive
+	-	To Install Java :
+	⁃	cd /home/ec2-user/java
+	⁃	To extract tar 
+	⁃	[ec2-user@ip-172-31-51-52 java]$ tar xvf jre-8u251-linux-x64.tar
+	⁃	Extracted output will have jre1.8.0_251
+	⁃	Set JAVA to PATH
+	⁃	[ec2-user@ip-172-31-51-52 bin]$ echo $PATH
+	⁃	/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/ec2-user/.local/bin:/home/ec2-user/bin
+	⁃	[ec2-user@ip-172-31-51-52 bin]$ export JAVA_HOME=/home/ec2-user/java/jre1.8.0_251/
+	⁃	[ec2-user@ip-172-31-51-52 bin]$ PATH=$PATH:$JAVA_HOME/bin
+	⁃	[ec2-user@ip-172-31-51-52 bin]$ export PATH
+	⁃	[ec2-user@ip-172-31-51-52 bin]$ java -version
+	⁃	java version "1.8.0_251"
+	-	RUN WITHOUT DOCKER IN EC2
+	-	java -cp ShivaPA2-1.0.0.jar com.amazonaws.pa2.spark.SparkWinePrediction
+
+
+RUN PREDICTION APP WITH DOCKER in EC2 [Instance ID: i-07afb4e2c45374411] - Refer detailed screen prints here at - CS643_PA1_DOCKER_Setup_Proof.pdf
+	1.	sudo yum update -y
+	2.	sudo yum install docker -y
+	3.	sudo service docker start
+	4.	docker —version
+	5.	sudo docker run -v "$(pwd)":/data ss4477/pa2:v1
+
 
 
 CONFIGURE AND INSTALL [Local instruction]
@@ -98,7 +141,7 @@ CONFIGURE AND INSTALL [Local instruction]
 	⁃	Now go to Vocareum - Account Details - AWS CLI (click Show).[Note that was-cli credentials is valid only for 3 hours]
 	⁃	Get ‘’aws_access_key_id”, “aws_secret_access_key” and “aws_session_token” along with its values and save it to credentials under /home/ec2-user/.aws/credentails (or copy from local, if you have it)
 	⁃	EC2-A
-	⁃	scp -i "shiva-key.pem" /Users/lopathara/.aws/credentials ec2-user@ec2-100-25-138-193.compute-1.amazonaws.com:/home/ec2-user/.aws/
+	⁃	scp -i "shiva-key.pem" /Users/lopathara/.aws/credentials ec2-user@ec2-100-25-134-232.compute-1.amazonaws.com:/home/ec2-user/.aws/
 
 
 GIT COMMANDS:

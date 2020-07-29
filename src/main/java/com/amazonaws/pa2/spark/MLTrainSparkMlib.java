@@ -43,7 +43,7 @@ public class MLTrainSparkMlib {
         
         SparkSession spark = SparkSession
 		    .builder().config("spark.testing.memory", 2147480000)
-		    	.master("local") //TODO : remove when deploying
+//		    	.master("local") //TODO : remove when deploying
 		    .appName("Programming Assignment 2: Spark")
 		    .getOrCreate();
 		
@@ -70,9 +70,10 @@ public class MLTrainSparkMlib {
 			    .option("delimiter", ";")
 			    .option("header", "true")
 			    .schema(schema)
+			    .csv(args[0]);
 //			    .csv("file:///data/TrainingDataset.csv"); // TODO : change while deploying to environment  //TODO : Important
 //				.csv("hdfs:///data/TrainingDataset.csv"); // TODO : change while deploying to environment  //TODO : Important
-			    .csv("file:///Users/lopathara/Documents/Data/Shiva/MS/sem3/CloudComputing/ProgrammingAssignment2/TrainingDataset.csv");
+//			    .csv("file:///Users/lopathara/Documents/Data/Shiva/MS/sem3/CloudComputing/ProgrammingAssignment2/TrainingDataset.csv");
 		
 		df.show();
 		
